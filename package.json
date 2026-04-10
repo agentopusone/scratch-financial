@@ -6,7 +6,8 @@
     "serve": "node dist/server.js",
     "serve:dev": "node scripts/serve-dev.js",
     "scrape": "node dist/scraper/scrape_hostile.js",
-    "start": "npm run build && concurrently \"npm run serve\" \"npm run scrape\""
+    "start": "npm run build && concurrently \"npm run serve\" \"npm run scrape\"",
+    "test": "mocha -r ts-node/register \"test/**/*.test.ts\" --exit"
   },
   "dependencies": {
     "concurrently": "^8.2.0",
@@ -14,8 +15,15 @@
     "playwright": "^1.43.0"
   },
   "devDependencies": {
+    "@types/chai": "^5.2.3",
     "@types/express": "^4.17.21",
+    "@types/jsdom": "^28.0.1",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.0.0",
+    "chai": "^6.2.2",
+    "jsdom": "^29.0.2",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.1",
     "typescript": "^5.9.3"
   }
 }
