@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>VetPractice Pro 2009</title>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: Tahoma, Arial, sans-serif; font-size: 13px; margin: 0; padding: 0; }
+    #top-bar { background: #2f4f6f; color: #fff; padding: 6px 10px; }
+    #top-bar span { margin-right: 15px; }
+    #main { padding: 10px; }
+    .tab { display: inline-block; padding: 4px 8px; border: 1px solid #999; cursor: pointer; font-size: 12px; }
+    .tab.active { background: #ddd; }
+    .pane { display: none; margin-top: 10px; }
+    .pane.active { display: block; }
+    .label { font-weight: bold; }
+    table { border-collapse: collapse; width: 100%; font-size: 12px; }
+    td, th { border: 1px solid #ccc; padding: 3px 5px; }
+    #status { font-size: 11px; color: #555; margin-top: 6px; }
+    .weirdClass { color: #222; }
+    .weirdClassButton { padding: 2px 4px; border: 1px solid #aaa; background: #eee; cursor: pointer; }
+    .hidden { display: none; }
+    .offscreen { position: absolute; left: -9999px; top: -9999px; }
+    .toolbar { background: #f3f3f3; padding: 4px; border-bottom: 1px solid #ccc; font-size: 11px; }
+    .sidebar { width: 180px; float: left; border-right: 1px solid #ccc; padding: 5px; font-size: 11px; }
+    .content { margin-left: 190px; }
+    .alert { background: #ffe0e0; border: 1px solid #cc9999; padding: 4px; margin-bottom: 6px; font-size: 11px; }
+  </style>
+  <script>
+    // Version drift
+    var VERSION = Math.random() < 0.5 ? 'v1' : 'v2';
+
+    function randomId(prefix) {
+      return prefix + '_' + Math.floor(Math.random() * 1000000);
+    }
+
+    function switchTab(name) {
+      var panes = document.querySelectorAll('.pane');
+      for (var i = 0; i < panes.length; i++) {
+        panes[i].classList.remove('active');
+      }
+      var pane = document.getElementById(name);
+      if (pane) pane.classList.add('active');
+
+      var tabs = document.querySelectorAll('.tab');
+      for (var j = 0; j < tabs.length; j++) {
+        tabs[j].classList.remove('active');
+      }
+      var activeTab = document.querySelector('[data-pane="' + name + '"]');
+      if (activeTab) activeTab.classList.add('active');
+
+      // Move nodes around for navigation weirdness
+      if (name === 'pane-invoice') {
+        var invoicePane = document.getElementById('pane-invoice');
+        var moved = document.getElementById('moved-node');
+        if (moved && moved.parentNode !== invoicePane) {
+          invoicePane.appendChild(moved);
+        }
+      } else if (name === 'pane-history') {
+        var historyPane = document.getElementById('pane-history');
+        var moved2 = document.getElementById('moved-node');
+        if (moved2 && moved2.parentNode !== historyPane) {
+          historyPane.appendChild(moved2);
+        }
+      }
+    }
+
+    function randomDelay(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function maybeFail() {
+      return Math.random() < 0.2;
+    }
+
+    function renderInvoiceInto(container) {
+      var status = document.getElementById('status');
+      container.innerHTML = '<div>Loading invoice...</div>';
+      status.textContent = 'Status: fetching invoice from local database...';
+
+      var delay = randomDelay(800, 3000);
+
+      setTimeout(function() {
+        if (maybeFail()) {
+          container.innerHTML = '<div class="alert">Error: Unable to load invoice. Please try again.</div>';
+          status.textContent = 'Status: invoice load failed (simulated network issue).';
+          return;
+        }
+
+        var invoiceId = randomId('inv');
+        var clientId = randomId('client');
+
+        var html = '';
+
+        // Malformed HTML and weird nesting
+        html += '<div id="' + clientId + '" class="weirdClass"><span class="label">Client:</span> Smith,&nbsp;John';
+        html += '<font color="#333">&nbsp;&nbsp;&nbsp;<span class="label">Patient:</span> Bella (Canine)</font>';
+        html += '<br><span class="label">Locale:</span> ';
+        html += VERSION === 'v1' ? 'US' : 'EU';
+        html += '</div>';
+        html += '<br>';
+
+        // Real invoice table
+        html += '<table id="' + invoiceId + '" class="weirdClass">';
+        if (VERSION === 'v1') {
+          html += '<tr><th>Code</th><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr>';
+        } else {
+          html += '<tr><th>Description</th><th>Code</th><th>Qty</th><th>Total</th><th>Price</th></tr>';
+        }
+        html += '<tr><td>VAX101</td><td>Rabies Vaccine</td><td>1</td><td>45.00</td><td>45.00</td></tr>';
+        html += '<tr><td>EXM001</td><td>Exam - New Patient</td><td>1</td><td>65.00</td><td>65.00</td></tr>';
+        html += '</table>';
+
+        // Decoy table
+        html += '<table class="weirdClass offscreen">';
+        html += '<tr><th>Code</th><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr>';
+        html += '<tr><td>FAKE1</td><td>Do not use</td><td>99</td><td>999.99</td><td>999.99</td></tr>';
+        html += '</table>';
+
+        // Mixed currency and date formats
+        html += '<br>';
+        html += '<div style="text-align: right;">';
+        html += '<span class="label">Subtotal:</span> ';
+        html += VERSION === 'v1' ? '110.00' : '110,00';
+        html += '<br />';
+        html += '<span class="label">Tax:</span> ';
+        html += VERSION === 'v1' ? '10.12 USD' : '10,12 $';
+        html += '<br />';
+        html += '<span class="label">Total:</span> ';
+        html += VERSION === 'v1' ? '$120.12' : '120,12 $';
+        html += '<br />';
+        html += '<span class="label">Visit Date:</span> ';
+        html += VERSION === 'v1' ? '01/12/2025' : '2025-12-01';
+        html += '</div>';
+
+        // Invisible unicode whitespace
+        html += '<div class="offscreen">Total:\u200b$120.12</div>';
+
+        container.innerHTML = html;
+        status.textContent = 'Status: invoice loaded (version ' + VERSION + ', client: ' + clientId + ', invoice: ' + invoiceId + ').';
+      }, delay);
+    }
+
+    // DOM churn: periodically replace the invoice table node
+    function startDomChurn() {
+      setInterval(function() {
+        var iframe = document.getElementById('invoice-frame');
+        if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return;
+        var doc = iframe.contentDocument;
+        var tables = doc.querySelectorAll('table.weirdClass');
+        if (tables.length === 0) return;
+        var t = tables[0];
+        var clone = t.cloneNode(true);
+        // Slight mutation
+        if (Math.random() < 0.5) {
+          clone.setAttribute('id', randomId('inv'));
+        }
+        t.parentNode.replaceChild(clone, t);
+      }, 4000);
+    }
+
+    function openInvoicePopup() {
+      var w = window.open('', 'invoicePopup', 'width=600,height=400');
+      if (!w) return;
+      w.document.write('<html><head><title>Invoice Popup</title></head><body>');
+      w.document.write('<h3>Invoice (Popup View)</h3>');
+      w.document.write('<div id="popup-invoice"></div>');
+      w.document.write('<script>(' + renderInvoiceInto.toString() + ')(document.getElementById("popup-invoice"));<\/script>');
+      w.document.write('</body></html>');
+      w.document.close();
+    }
+
+    function initIframe() {
+      var iframe = document.getElementById('invoice-frame');
+      var doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      // Intentionally slightly malformed HTML
+      doc.write('<html><head><title>Invoice Frame</title></head><body>');
+      doc.write('<div class="toolbar weirdClass">Toolbar: <span class="weirdClassButton" onclick="alert(\'Not implemented\')">Print</span> | <span class="weirdClassButton">Email</span></div>');
+      doc.write('<div id="invoice-container-inner"></div>');
+      doc.write('<div id="moved-node" class="alert">Reminder: Balance from previous visit: 45,50 $</div>');
+      doc.write('</body></html>');
+      doc.close();
+
+      var innerContainer = doc.getElementById('invoice-container-inner');
+      // Staggered rendering: client info first, then line items, then totals
+      innerContainer.innerHTML = '<div>Loading client information...</div>';
+      setTimeout(function() {
+        innerContainer.innerHTML = '<div><span class="label">Client:</span> Smith, John&nbsp;&nbsp;&nbsp;<span class="label">Patient:</span> Bella (Canine)</div><div>Loading line items...</div>';
+        setTimeout(function() {
+          renderInvoiceInto(innerContainer);
+        }, randomDelay(500, 2000));
+      }, randomDelay(300, 1200));
+    }
+
+    function disableRightClickAndSelection() {
+      document.addEventListener('contextmenu', function(e) {
+        if (e.target && e.target.closest && e.target.closest('#main')) {
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('selectstart', function(e) {
+        if (e.target && e.target.closest && e.target.closest('#main')) {
+          e.preventDefault();
+        }
+      });
+    }
+
+    window.onload = function() {
+      switchTab('pane-invoice');
+      initIframe();
+      startDomChurn();
+      disableRightClickAndSelection();
+    };
+  </script>
+</head>
+<body>
+  <div id="top-bar">
+    <span>VetPractice Pro 2009</span>
+    <span>User: frontdesk01</span>
+    <span>Location: Main Clinic</span>
+    <span>Version: <script>document.write(VERSION);</script></span>
+  </div>
+
+  <div id="main">
+    <div class="toolbar">
+      <span>Connected: Local DB</span> |
+      <span>Network: <script>document.write(Math.random() < 0.5 ? 'Unstable' : 'OK');</script></span> |
+      <span onclick="openInvoicePopup()" class="weirdClassButton">Open Invoice Popup</span>
+    </div>
+
+    <div>
+      <span class="tab active" data-pane="pane-invoice" onclick="switchTab('pane-invoice')">Invoice</span>
+      <span class="tab" data-pane="pane-history" onclick="switchTab('pane-history')">History</span>
+      <span class="tab" data-pane="pane-admin" onclick="switchTab('pane-admin')">Admin</span>
+    </div>
+
+    <div id="pane-invoice" class="pane active">
+      <div class="sidebar">
+        <div class="alert">Alert: Backup overdue by 17 days.</div>
+        <p><b>Shortcuts</b></p>
+        <ul>
+          <li>F2: New Visit</li>
+          <li>F5: Refresh</li>
+          <li>Ctrl+P: Print</li>
+        </ul>
+      </div>
+      <div class="content">
+        <h3>Current Visit</h3>
+        <iframe id="invoice-frame" style="width: 100%; height: 260px; border: 1px solid #ccc;"></iframe>
+        <div id="status">Status: waiting for invoice...</div>
+
+        <!-- Fake data region that looks real -->
+        <div style="margin-top: 10px;">
+          <h4>Summary (Do Not Use)</h4>
+          <table>
+            <tr><th>Code</th><th>Description</th><th>Total</th></tr>
+            <tr><td>FAKE2</td><td>Summary Row</td><td>999.99</td></tr>
+          </table>
+        </div>
+      </div>
+      <div style="clear: both;"></div>
+    </div>
+
+    <div id="pane-history" class="pane">
+      <h3>Visit History</h3>
+      <table>
+        <tr><th>Date</th><th>Reason</th><th>Total</th></tr>
+        <tr><td>01/12/2025</td><td>Annual Exam</td><td>$180.00</td></tr>
+        <tr><td>11-03-2024</td><td>Dental Cleaning</td><td>420,50 $</td></tr>
+      </table>
+      <div id="moved-node" class="alert">Reminder: Balance from previous visit: 45,50 $</div>
+    </div>
+
+    <div id="pane-admin" class="pane">
+      <h3>Admin</h3>
+      <p>Do not touch. (Seriously.)</p>
+      <p>Database status: <span class="weirdClass">OK</span></p>
+      <p>Last backup: 12 Jan 2025</p>
+    </div>
+  </div>
+</body>
+</html>
